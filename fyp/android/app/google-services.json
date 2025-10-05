@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "489997114843",
+    "firebase_url": "https://arcscope-ac787-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "arcscope-ac787",
+    "storage_bucket": "arcscope-ac787.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:489997114843:android:70c9b7da2b07e05b1fdbfe",
+        "android_client_info": {
+          "package_name": "com.example.fyp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD155NCt3rUqSzXR7uOovRy3NPIgBdVqHA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
