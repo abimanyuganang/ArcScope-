@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'single_mode_screen.dart';
 import '../models/archery_models.dart';
+import 'play_screen.dart';
 
 class SessionSetupScreen extends StatefulWidget {
   const SessionSetupScreen({super.key});
@@ -110,7 +110,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => SingleModeScreen(round: selectedRound),
+                                builder: (_) => PlayScreen(round: selectedRound),
                               ),
                             );
                           }
@@ -290,12 +290,110 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
   }
 
   Widget _buildLoggingForm(BuildContext context) {
-    // Placeholder for logging step
-    return Center(
-      child: Text(
-        'Logging step goes here.',
-        style: TextStyle(fontSize: 18, color: Colors.black54),
+    Widget targetWidget;
+    switch (_targetType) {
+      case "FITA":
+        targetWidget = _buildFitaTarget();
+        break;
+      case "Field":
+        targetWidget = _buildFieldTarget();
+        break;
+      case "3D":
+        targetWidget = _build3DTarget();
+        break;
+      default:
+        targetWidget = const SizedBox();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Choose Target Type',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: _targetTypes.map((type) {
+            return GestureDetector(
+              onTap: () => setState(() => _targetType = type),
+              child: Column(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: _targetType == type ? Colors.blue : Colors.transparent,
+                        width: 2,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: type == "FITA"
+                          ? _buildFitaTarget()
+                          : type == "Field"
+                              ? _buildFieldTarget()
+                              : _build3DTarget(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(type),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 24),
+        Center(child: targetWidget),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  // Add these widgets to session_setup_screen.dart
+  Widget _buildFitaTarget() {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            Colors.yellow,
+            Colors.red,
+            Colors.blue,
+            Colors.black,
+            Colors.white,
+          ],
+          stops: [0.2, 0.4, 0.6, 0.8, 1.0],
+        ),
       ),
+      child: const Center(child: Text('FITA', style: TextStyle(fontSize: 10))),
+    );
+  }
+
+  Widget _buildFieldTarget() {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.green[700],
+      ),
+      child: const Center(child: Text('Field', style: TextStyle(fontSize: 10, color: Colors.white))),
+    );
+  }
+
+  Widget _build3DTarget() {
+    return Container(
+      width: 60,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.brown[300],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Center(child: Text('3D', style: TextStyle(fontSize: 10, color: Colors.white))),
     );
   }
 }

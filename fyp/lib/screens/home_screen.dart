@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../data/session_repository.dart';
 import '../models/session.dart';
 import 'session_setup_screen.dart';
+import 'session_detail_screen.dart'; 
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -391,7 +392,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         trailing: Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          // TODO: Navigate to session detail screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => SessionDetailScreen(sessionId: session.id),
+            ),
+          );
         },
       ),
     );
