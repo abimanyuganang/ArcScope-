@@ -148,7 +148,7 @@ class _ScoreboardScreenState extends State<ScoreboardScreen> {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () async {
-          final saved = await Navigator.push(context, MaterialPageRoute(builder: (_) => PlayScreen(round: roundsData.first)));
+          final saved = await Navigator.push(context, MaterialPageRoute(builder: (_) => PlayScreen(round: roundsData.first, bowType: 'Recurve')));
           if (saved == true && mounted) setState(() {});
         },
       ),

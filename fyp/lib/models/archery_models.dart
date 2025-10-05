@@ -14,7 +14,7 @@ class ArcheryRound {
   final int targetSize;
   final int ends;
   final int arrowsPerEnd;
-  final String scoringType; // "10-zone", "field", "3D"
+  final String scoringType;
 
   ArcheryRound({
     required this.id,
@@ -27,10 +27,6 @@ class ArcheryRound {
     required this.arrowsPerEnd,
     required this.scoringType,
   });
-
-  bool get outdoor => discipline == ArcheryDiscipline.outdoor;
-
-  int get maxScore => ends * arrowsPerEnd * 10;
 }
 
 // Example rounds
@@ -44,7 +40,7 @@ final List<ArcheryRound> roundsData = [
     targetSize: 122,
     ends: 24,
     arrowsPerEnd: 6,
-    scoringType: "10-zone",
+    scoringType: '10-zone',
   ),
   ArcheryRound(
     id: 'indoor18',
@@ -55,7 +51,7 @@ final List<ArcheryRound> roundsData = [
     targetSize: 40,
     ends: 12,
     arrowsPerEnd: 5,
-    scoringType: "10-zone",
+    scoringType: '10-zone',
   ),
   ArcheryRound(
     id: 'field',
@@ -66,7 +62,7 @@ final List<ArcheryRound> roundsData = [
     targetSize: 40,
     ends: 24,
     arrowsPerEnd: 3,
-    scoringType: "field",
+    scoringType: 'field',
   ),
   ArcheryRound(
     id: '3d',
@@ -77,6 +73,6 @@ final List<ArcheryRound> roundsData = [
     targetSize: 0,
     ends: 40,
     arrowsPerEnd: 1,
-    scoringType: "3D",
+    scoringType: '3D',
   ),
 ];

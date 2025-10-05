@@ -10,84 +10,75 @@ class SessionSetupScreen extends StatefulWidget {
 }
 
 class _SessionSetupScreenState extends State<SessionSetupScreen> {
-   int _step = 0;
+  DateTime _dateTime = DateTime.now();
+  String _locationType = 'Indoor';
+  String _locationText = '';
+  double _distance = 18;
+  String _targetType = 'FITA';
+  String _bowType = 'Recurve';
+  int _ends = 6;
+  int _arrowsPerEnd = 6;
+  String _notes = '';
 
-   DateTime _dateTime = DateTime.now();
-   String _locationType = 'Indoor';
-   String _locationText = '';
-   double _distance = 18;
-   String _targetType = 'FITA';
-   String _bowType = 'Recurve';
-   int _ends = 6;
-   String _notes = '';
-
-   ArcheryRound get selectedRound => ArcheryRound(
-         id: 'custom',
-         name: 'Custom Session',
-         discipline: _locationType == 'Indoor'
-             ? ArcheryDiscipline.indoor
-             : ArcheryDiscipline.outdoor,
-         distances: [_distance],
-         totalArrows: _ends * 3, // Assuming 3 arrows per end
-         targetSize: 40,
-         ends: _ends,
-         arrowsPerEnd: 3,
-         scoringType: _targetType == 'FITA'
-             ? '10-zone'
-             : _targetType.toLowerCase(),
-       );
-
-  final _locationTypes = ['Indoor', 'Outdoor', 'Club', 'Other'];
-  final _distances = [18.0, 30.0, 50.0];
-  final _targetTypes = ['FITA', 'Field', '3D'];
-  final _bowTypes = ['Recurve', 'Compound', 'Traditional'];
+  final List<String> _locationTypes = ['Indoor', 'Outdoor', 'Club', 'Other'];
+  final List<double> _distances = [18.0, 30.0, 50.0];
+  final List<String> _targetTypes = ['FITA', 'Field', '3D'];
+  final List<String> _bowTypes = ['Recurve', 'Compound', 'Barebow', 'Traditional'];
 
   bool get _detailsValid =>
       _dateTime != null &&
       _distance > 0 &&
-      _targetType.isNotEmpty;
+      _targetType.isNotEmpty &&
+      _bowType.isNotEmpty &&
+      _ends > 0 &&
+      _arrowsPerEnd > 0;
+
+  void _updateArrowsPerEnd(String targetType) {
+    setState(() {
+      _targetType = targetType;
+      if (targetType == 'FITA') {
+        _arrowsPerEnd = 6;
+      } else if (targetType == 'Field') {
+        _arrowsPerEnd = 3;
+      } else if (targetType == '3D') {
+        _arrowsPerEnd = 1;
+      }
+    });
+  }
+
+  ArcheryRound get selectedRound => ArcheryRound(
+    id: 'custom',
+    name: 'Custom Session',
+    discipline: ArcheryDiscipline.outdoor, // You can add a dropdown for discipline if needed
+    distances: [_distance],
+    totalArrows: _ends * _arrowsPerEnd,
+    targetSize: _targetType == 'FITA' ? 122 : 40,
+    ends: _ends,
+    arrowsPerEnd: _arrowsPerEnd,
+    scoringType: _targetType == 'FITA'
+        ? '10-zone'
+        : _targetType == 'Field'
+            ? 'field'
+            : '3D',
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Session Setup', style: TextStyle(color: Colors.black)),
+        title: const Text('Session Setup', style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         centerTitle: true,
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          /*image: DecorationImage(
-            image: AssetImage('assets/archery_bg.png'), // Add a subtle target pattern image here
-            fit: BoxFit.cover,
-            opacity: 0.08,
-          /),*/
-          color: Color(0xFFF5F6FA),
-        ),
-        child: SafeArea(
-          child: Stepper(
-            type: StepperType.horizontal,
-            currentStep: _step,
-            controlsBuilder: (context, details) => const SizedBox.shrink(),
-            steps: [
-              Step(
-                title: const Text('Details'),
-                isActive: _step == 0,
-                content: _buildDetailsForm(context),
-              ),
-              Step(
-                title: const Text('Logging'),
-                isActive: _step == 1,
-                content: _buildLoggingForm(context),
-              ),
-            ],
-          ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
+          child: _buildDetailsForm(context),
         ),
       ),
       bottomNavigationBar: SafeArea(
@@ -103,20 +94,15 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                   ),
                   onPressed: _detailsValid
                       ? () {
-                          if (_step == 0) {
-                            setState(() => _step = 1);
-                          } else {
-                            // TODO: Save session and navigate to logging screen
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => PlayScreen(round: selectedRound),
-                              ),
-                            );
-                          }
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PlayScreen(round: selectedRound, bowType: _bowType),
+                            ),
+                          );
                         }
                       : null,
-                  child: Text(_step == 0 ? 'Next: Start Logging' : 'Save & Start'),
+                  child: const Text('Start Scoring'),
                 ),
               ),
               const SizedBox(width: 12),
@@ -138,7 +124,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
         // Date & Time
         ListTile(
           leading: const Icon(Icons.calendar_today),
-          title: Text('Date & Time*'),
+          title: const Text('Date & Time*'),
           subtitle: Text('${_dateTime.month}/${_dateTime.day}/${_dateTime.year}, ${_dateTime.hour.toString().padLeft(2, '0')}:${_dateTime.minute.toString().padLeft(2, '0')}'),
           trailing: IconButton(
             icon: const Icon(Icons.edit),
@@ -196,7 +182,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Distance Slider
+        // Distance Dropdown
         Row(
           children: [
             const Icon(Icons.straighten),
@@ -222,27 +208,15 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
               child: DropdownButtonFormField<String>(
                 value: _targetType,
                 items: _targetTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                onChanged: (v) => setState(() => _targetType = v ?? 'FITA'),
+                onChanged: (v) => _updateArrowsPerEnd(v ?? 'FITA'),
                 decoration: const InputDecoration(labelText: 'Target Type*'),
               ),
-            ),
-            const SizedBox(width: 8),
-            // Target preview (placeholder)
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.blue.shade100,
-                border: Border.all(color: Colors.blue.shade300),
-              ),
-              child: const Icon(Icons.adjust, color: Colors.blue),
             ),
           ],
         ),
         const SizedBox(height: 16),
 
-        // Bow Type
+        // Bow Type Dropdown
         Row(
           children: [
             const Icon(Icons.architecture),
@@ -252,7 +226,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                 value: _bowType,
                 items: _bowTypes.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
                 onChanged: (v) => setState(() => _bowType = v ?? 'Recurve'),
-                decoration: const InputDecoration(labelText: 'Bow Type'),
+                decoration: const InputDecoration(labelText: 'Bow Type*'),
               ),
             ),
           ],
@@ -286,114 +260,6 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
           onChanged: (v) => setState(() => _notes = v),
         ),
       ],
-    );
-  }
-
-  Widget _buildLoggingForm(BuildContext context) {
-    Widget targetWidget;
-    switch (_targetType) {
-      case "FITA":
-        targetWidget = _buildFitaTarget();
-        break;
-      case "Field":
-        targetWidget = _buildFieldTarget();
-        break;
-      case "3D":
-        targetWidget = _build3DTarget();
-        break;
-      default:
-        targetWidget = const SizedBox();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Choose Target Type',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: _targetTypes.map((type) {
-            return GestureDetector(
-              onTap: () => setState(() => _targetType = type),
-              child: Column(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: _targetType == type ? Colors.blue : Colors.transparent,
-                        width: 2,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: type == "FITA"
-                          ? _buildFitaTarget()
-                          : type == "Field"
-                              ? _buildFieldTarget()
-                              : _build3DTarget(),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(type),
-                ],
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 24),
-        Center(child: targetWidget),
-        const SizedBox(height: 24),
-      ],
-    );
-  }
-
-  // Add these widgets to session_setup_screen.dart
-  Widget _buildFitaTarget() {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            Colors.yellow,
-            Colors.red,
-            Colors.blue,
-            Colors.black,
-            Colors.white,
-          ],
-          stops: [0.2, 0.4, 0.6, 0.8, 1.0],
-        ),
-      ),
-      child: const Center(child: Text('FITA', style: TextStyle(fontSize: 10))),
-    );
-  }
-
-  Widget _buildFieldTarget() {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.green[700],
-      ),
-      child: const Center(child: Text('Field', style: TextStyle(fontSize: 10, color: Colors.white))),
-    );
-  }
-
-  Widget _build3DTarget() {
-    return Container(
-      width: 60,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.brown[300],
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: const Center(child: Text('3D', style: TextStyle(fontSize: 10, color: Colors.white))),
     );
   }
 }

@@ -4,9 +4,10 @@ import '../models/archery_models.dart';
 class StatsScreen extends StatelessWidget {
   final ArcheryRound round;
   final int totalScore;
-  final double average;
+  final int average;
   final int hits;
   final List<List<List<int?>>> allScores;
+  
 
   const StatsScreen({
     super.key,
@@ -77,7 +78,7 @@ class StatsScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _metric('$totalScore', 'Score'),
-              _metric(average.toStringAsFixed(2), 'Average'),
+              _metric('$average', 'Average'),
               _metric('$hits/${round.totalArrows}', 'Hits'),
             ],
           ),
