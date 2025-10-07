@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 import '../models/session.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SessionRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -38,10 +39,12 @@ class SessionRepository {
 
   // Fetch all sessions
   Future<List<Session>> getAllSessions() async {
-    final snapshot = await _sessionsCollection.get();
-    return snapshot.docs
-        .map((doc) => Session.fromFirestore(doc))
-        .toList();
+    final user = FirebaseAuth.instance.currentUser;
+    final snapshot = await FirebaseFirestore.instance
+        .collection('sessions')
+        .where('userId', isEqualTo: user?.uid)
+        .get();
+    return snapshot.docs.map((doc) => Session.fromFirestore(doc)).toList();
   }
 
   // Fetch filtered sessions (by date range or session type)

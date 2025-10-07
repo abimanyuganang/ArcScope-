@@ -10,6 +10,7 @@ class Session {
   String? bowType;
   double? distance;
   String? roundId;
+  String? userId;
 
   Session({
     required this.id,
@@ -20,6 +21,7 @@ class Session {
     this.bowType,
     this.distance,
     this.roundId,
+    this.userId,
   }) : arrowsShot = scores.length;
 
   int get totalScore => scores.fold<int>(0, (s, v) {
@@ -42,6 +44,7 @@ class Session {
       'bowType': bowType,
       'distance': distance,
       'roundId': roundId,
+      'userId': userId,
     };
   }
 
@@ -57,6 +60,7 @@ class Session {
       bowType: data['bowType'],
       distance: data['distance'],
       roundId: data['roundId'],
+      userId: data['userId'],
     );
   }
 }

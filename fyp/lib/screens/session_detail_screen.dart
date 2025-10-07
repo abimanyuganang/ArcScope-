@@ -120,7 +120,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                       if (confirm == true) {
                         await SessionRepository().deleteSession(s.id);
                         if (context.mounted) {
-                          Navigator.of(context).pop(); // Go back to home after delete
+                          Navigator.of(context).pop('deleted'); // Pass 'deleted' back to HomeScreen
                         }
                       }
                     },

@@ -396,13 +396,18 @@ class _HomeScreenState extends State<HomeScreen> {
           "${session.date.toLocal().toString().split(' ')[0]} • Score: ${session.totalScore} • Arrows: ${session.arrowsShot}",
         ),
         trailing: Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => SessionDetailScreen(sessionId: session.id),
             ),
           );
+          if (result == 'deleted') {
+            setState(() {
+              _sessionsFuture = SessionRepository().getAllSessions();
+            });
+          }
         },
       ),
     );

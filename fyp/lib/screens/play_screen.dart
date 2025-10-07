@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/archery_models.dart';
 import '../models/session.dart';
-import 'stats_screen.dart'; // Import the StatsScreen
+import 'stats_screen.dart'; 
 
 class PlayScreen extends StatefulWidget {
   final ArcheryRound round;
@@ -83,6 +84,7 @@ class _PlayScreenState extends State<PlayScreen> {
                       final arrows = scores.expand((e) => e).length;
                       final int avg = arrows > 0 ? (total / arrows).round() : 0;
                       final hits = scores.expand((e) => e).where((s) => s > 0).length;
+                      final user = FirebaseAuth.instance.currentUser;
 
                       // Save session to Firestore
                       final session = Session(
@@ -94,6 +96,7 @@ class _PlayScreenState extends State<PlayScreen> {
                         bowType: widget.bowType,
                         distance: widget.round.distances.first,
                         roundId: widget.round.id,
+                        userId: user?.uid,
                       );
 
                       await FirebaseFirestore.instance.collection('sessions').add(session.toMap());
