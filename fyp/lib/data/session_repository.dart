@@ -71,8 +71,13 @@ class SessionRepository {
         .toList();
   }
 
+  // Update a session
+  Future<void> updateSession(Session session) async {
+    await _sessionsCollection.doc(session.id).update(session.toMap());
+  }
+
   // Delete a session by ID
-  Future<void> deleteSession(String sessionId) async {
-    await _sessionsCollection.doc(sessionId).delete();
+  Future<void> deleteSession(String id) async {
+    await FirebaseFirestore.instance.collection('sessions').doc(id).delete();
   }
 }

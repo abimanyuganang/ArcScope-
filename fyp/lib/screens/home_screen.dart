@@ -291,6 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   return Center(child: Text("No sessions found."));
                 }
                 final sessions = snapshot.data!;
+                sessions.sort((a, b) => b.date.compareTo(a.date));
                 return Column(
                   children: sessions.map((session) => _sessionCard(session)).toList(),
                 );
@@ -371,8 +372,12 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const SessionSetupScreen()),
-          );
-        },
+        ).then((_) {
+          setState(() {
+            _sessionsFuture = SessionRepository().getAllSessions();
+          });
+        });
+      },
       ),
     );
   }

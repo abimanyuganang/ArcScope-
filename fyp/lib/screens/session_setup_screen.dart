@@ -1,24 +1,45 @@
 import 'package:flutter/material.dart';
 import '../models/archery_models.dart';
+import '../models/session.dart';
+import '../data/session_repository.dart';
 import 'play_screen.dart';
 
 class SessionSetupScreen extends StatefulWidget {
-  const SessionSetupScreen({super.key});
+  final Session? session;
+  const SessionSetupScreen({super.key, this.session});
 
   @override
   State<SessionSetupScreen> createState() => _SessionSetupScreenState();
 }
 
 class _SessionSetupScreenState extends State<SessionSetupScreen> {
-  DateTime _dateTime = DateTime.now();
+  late DateTime _dateTime;
   String _locationType = 'Indoor';
   String _locationText = '';
-  double _distance = 18;
-  String _targetType = 'FITA';
-  String _bowType = 'Recurve';
+  late double _distance;
+  late String _targetType;
+  late String _bowType;
   int _ends = 6;
   int _arrowsPerEnd = 6;
-  String _notes = '';
+  late String _notes;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.session != null) {
+      _dateTime = widget.session!.date;
+      _distance = widget.session!.distance ?? 18;
+      _targetType = widget.session!.sessionType ?? 'FITA';
+      _bowType = widget.session!.bowType ?? 'Recurve';
+      _notes = widget.session!.remarks ?? '';
+    } else {
+      _dateTime = DateTime.now();
+      _distance = 18;
+      _targetType = 'FITA';
+      _bowType = 'Recurve';
+      _notes = '';
+    }
+  }
 
   final List<String> _locationTypes = ['Indoor', 'Outdoor', 'Club', 'Other'];
   final List<double> _distances = [18.0, 30.0, 50.0];
@@ -70,7 +91,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Session Setup', style: TextStyle(color: Colors.black)),
+        title: Text(widget.session != null ? 'Edit Session' : 'Session Setup', style: const TextStyle(color: Colors.black)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -92,17 +113,34 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                     minimumSize: const Size.fromHeight(52),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  onPressed: _detailsValid
-                      ? () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => PlayScreen(round: selectedRound, bowType: _bowType),
-                            ),
+                  onPressed: widget.session != null
+                      ? () async {
+                          final updatedSession = Session(
+                            id: widget.session!.id,
+                            date: _dateTime,
+                            scores: widget.session!.scores,
+                            remarks: _notes,
+                            sessionType: _targetType,
+                            bowType: _bowType,
+                            distance: _distance,
+                            roundId: widget.session!.roundId,
                           );
+                          await SessionRepository().updateSession(updatedSession);
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                          }
                         }
-                      : null,
-                  child: const Text('Start Scoring'),
+                      : _detailsValid
+                          ? () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => PlayScreen(round: selectedRound, bowType: _bowType),
+                                ),
+                              );
+                            }
+                          : null,
+                  child: Text(widget.session != null ? 'Save Changes' : 'Start Scoring'),
                 ),
               ),
               const SizedBox(width: 12),

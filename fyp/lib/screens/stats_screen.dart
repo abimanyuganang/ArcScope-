@@ -7,7 +7,6 @@ class StatsScreen extends StatelessWidget {
   final int average;
   final int hits;
   final List<List<List<int?>>> allScores;
-  
 
   const StatsScreen({
     super.key,
@@ -18,27 +17,122 @@ class StatsScreen extends StatelessWidget {
     required this.allScores,
   });
 
-  static const _labels = ['X','10','9','8','7','6','5','4','3','2','1','M'];
+  List<Widget> _buildEndAverages(List<List<List<int?>>> allScores) {
+    final averages = <Widget>[];
+    if (allScores.isNotEmpty) {
+      final ends = allScores.first;
+      for (int i = 0; i < ends.length; i++) {
+        final endScores = ends[i].whereType<int>().toList();
+        final avg = endScores.isEmpty ? 0.0 : endScores.reduce((a, b) => a + b) / endScores.length;
+        averages.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Text('End ${i + 1}: ${avg.toStringAsFixed(2)}'),
+          ),
+        );
+      }
+    }
+    return averages;
+  }
+
+  Widget _buildDispersionPattern(List<List<List<int?>>> allScores) {
+    if (allScores.isEmpty) return const Text('No data');
+    final ends = allScores.first;
+    return Column(
+      children: List.generate(ends.length, (endIdx) {
+        final end = ends[endIdx];
+        return Row(
+          children: List.generate(end.length, (arrowIdx) {
+            final score = end[arrowIdx] ?? 0;
+            Color color;
+            if (score >= 9) {
+              color = Colors.yellow[700]!;
+            } else if (score >= 7) {
+              color = Colors.red[400]!;
+            } else if (score >= 5) {
+              color = Colors.blue[400]!;
+            } else if (score >= 3) {
+              color = Colors.black;
+            } else {
+              color = Colors.white;
+            }
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: color,
+                border: Border.all(color: Colors.grey),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  score > 0 ? '$score' : '',
+                  style: TextStyle(
+                    color: score >= 5 ? Colors.black : Colors.grey[700],
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            );
+          }),
+        );
+      }),
+    );
+  }
+
+  Map<int, int> _scoreDistribution(List<List<List<int?>>> allScores) {
+    final dist = <int, int>{};
+    if (allScores.isNotEmpty) {
+      final ends = allScores.first;
+      for (final end in ends) {
+        for (final score in end) {
+          if (score != null) {
+            dist[score] = (dist[score] ?? 0) + 1;
+          }
+        }
+      }
+    }
+    return dist;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final buckets = _buildHistogram(allScores);
-    final maxBucket = buckets.values.fold<int>(0, (p, c) => c > p ? c : p);
+    final dist = _scoreDistribution(allScores);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Stats')),
+      appBar: AppBar(
+        title: Text('Statistics'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home),
+            tooltip: 'Back to Home',
+            onPressed: () {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(round.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          Wrap(spacing: 6, children: [
-            _tag('End: ${round.ends}'),
-            _tag('/ ${round.totalArrows}'),
-            ...round.distances.map((d) => _tag('${d}m')),
-          ]),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Round: ${round.name}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text('Total Score: $totalScore'),
+                  Text('Average: ${average.toStringAsFixed(2)}'),
+                  Text('Hits: $hits'),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
-
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(16)),
@@ -46,106 +140,61 @@ class StatsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Score Distribution', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 180,
-                  child: LayoutBuilder(
-                    builder: (ctx, constraints) {
-                      const labelSpace = 28.0;
-                      final barMaxHeight = constraints.maxHeight - labelSpace;
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          for (final key in _labels)
-                            _Bar(
-                              label: key,
-                              value: buckets[key] ?? 0,
-                              max: maxBucket,
-                              maxBarHeight: barMaxHeight,
-                            ),
-                        ],
-                      );
-                    },
-                  ),
+                const SizedBox(height: 12),
+                Row(
+                  children: () {
+                    final sortedEntries = dist.entries.toList()
+                      ..sort((a, b) => b.key.compareTo(a.key));
+                    return sortedEntries.map((e) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Column(
+                            children: [
+                              Text('${e.key}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Container(
+                                width: 18,
+                                height: (e.value * 8).toDouble().clamp(8, 80),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue,
+                                  border: Border.all(color: Colors.grey),
+                                ),
+                              ),
+                              Text('${e.value}', style: const TextStyle(fontSize: 12)),
+                            ],
+                          ),
+                        )).toList();
+                  }(),
                 ),
               ],
             ),
           ),
-
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _metric('$totalScore', 'Score'),
-              _metric('$average', 'Average'),
-              _metric('$hits/${round.totalArrows}', 'Hits'),
-            ],
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(16)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Average Arrow Score Per End', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                ..._buildEndAverages(allScores),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(16)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Dispersion Pattern', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                _buildDispersionPattern(allScores),
+              ],
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Map<String, int> _buildHistogram(List<List<List<int?>>> s) {
-    final map = {for (final l in _labels) l: 0};
-    for (final d in s) {
-      for (final e in d) {
-        for (final a in e) {
-          if (a == null) continue;
-          switch (a) {
-            case 11: map['X'] = (map['X'] ?? 0) + 1; break;
-            case -1: map['M'] = (map['M'] ?? 0) + 1; break;
-            default: map['$a'] = (map['$a'] ?? 0) + 1;
-          }
-        }
-      }
-    }
-    return map;
-  }
-
-  Widget _tag(String t) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(10)),
-        child: Text(t, style: const TextStyle(fontSize: 12)),
-      );
-
-  Widget _metric(String big, String label) => Column(
-        children: [
-          Text(big, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Colors.black54)),
-        ],
-      );
-}
-
-class _Bar extends StatelessWidget {
-  final String label;
-  final int value;
-  final int max;
-  final double maxBarHeight;
-  const _Bar({required this.label, required this.value, required this.max, required this.maxBarHeight});
-
-  @override
-  Widget build(BuildContext context) {
-    final h = max == 0 ? 0.0 : (value / max) * maxBarHeight;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          width: 16,
-          height: h,
-          decoration: BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(6)),
-          alignment: Alignment.topCenter,
-          padding: const EdgeInsets.only(top: 2),
-          child: value > 0
-              ? Text('$value',
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600))
-              : null,
-        ),
-        const SizedBox(height: 6),
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.black54)),
-      ],
     );
   }
 }

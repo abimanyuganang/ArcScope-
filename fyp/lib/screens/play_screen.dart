@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/archery_models.dart';
+import '../models/session.dart';
 import 'stats_screen.dart'; // Import the StatsScreen
 
 class PlayScreen extends StatefulWidget {
@@ -72,7 +74,7 @@ class _PlayScreenState extends State<PlayScreen> {
             ElevatedButton(
               onPressed: (currentEnd == widget.round.ends - 1 &&
                       currentArrow == widget.round.arrowsPerEnd - 1)
-                  ? () {
+                  ? () async {
                       // Prepare stats data
                       final allScores = [
                         scores.map((endScores) => endScores.map((s) => s as int?).toList()).toList()
@@ -81,6 +83,20 @@ class _PlayScreenState extends State<PlayScreen> {
                       final arrows = scores.expand((e) => e).length;
                       final int avg = arrows > 0 ? (total / arrows).round() : 0;
                       final hits = scores.expand((e) => e).where((s) => s > 0).length;
+
+                      // Save session to Firestore
+                      final session = Session(
+                        id: '', // Firestore will generate the ID
+                        date: DateTime.now(),
+                        scores: scores.expand((e) => e).toList(), // Flatten your 2D scores list
+                        remarks: '', // Add remarks if you have
+                        sessionType: widget.round.name,
+                        bowType: widget.bowType,
+                        distance: widget.round.distances.first,
+                        roundId: widget.round.id,
+                      );
+
+                      await FirebaseFirestore.instance.collection('sessions').add(session.toMap());
 
                       Navigator.pushReplacement(
                         context,

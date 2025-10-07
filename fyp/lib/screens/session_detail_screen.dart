@@ -1,11 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-//import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csv/csv.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../data/session_repository.dart';
 import '../models/session.dart';
+import 'session_setup_screen.dart';
 
 class SessionDetailScreen extends StatefulWidget {
   final String sessionId;
@@ -80,6 +80,51 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
               appBar: AppBar(
                 title: const Text('Session Detail'),
                 actions: [
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    tooltip: 'Edit Session',
+                    onPressed: () {
+                      // Navigate to SessionSetupScreen with this session for editing
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SessionSetupScreen(
+                            session: s, // Pass the session object (you may need to adjust SessionSetupScreen to accept it)
+                          ),
+                        ),
+                      ).then((_) {
+                        setState(() {
+                          // Refresh session after editing
+                          final repo = SessionRepository();
+                          _allSessionsFuture = repo.getAllSessions();
+                          _sessionFuture = _allSessionsFuture.then((sessions) => sessions.firstWhere((e) => e.id == widget.sessionId));
+                        });
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    tooltip: 'Delete Session',
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete Session'),
+                          content: const Text('Are you sure you want to delete this session?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        await SessionRepository().deleteSession(s.id);
+                        if (context.mounted) {
+                          Navigator.of(context).pop(); // Go back to home after delete
+                        }
+                      }
+                    },
+                  ),
                   IconButton(
                     icon: const Icon(Icons.ios_share),
                     onPressed: () async {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-//import 'package:cloud_firestore/cloud_firestore.dart';
 import '../data/session_repository.dart';
 import '../models/session.dart';
 import '../models/archery_models.dart';
