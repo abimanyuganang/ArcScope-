@@ -3,11 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/archery_models.dart';
 import '../models/session.dart';
-import 'stats_screen.dart'; 
+import 'stats_screen.dart';
 
 class PlayScreen extends StatefulWidget {
   final ArcheryRound round;
-  final String bowType; // Pass bow type from setup
+  final String bowType;
 
   const PlayScreen({super.key, required this.round, required this.bowType});
 
@@ -16,7 +16,7 @@ class PlayScreen extends StatefulWidget {
 }
 
 class _PlayScreenState extends State<PlayScreen> {
-  late List<List<int>> scores; // scores[end][arrow]
+  late List<List<int>> scores;
   int currentEnd = 0;
   int currentArrow = 0;
 
@@ -46,85 +46,176 @@ class _PlayScreenState extends State<PlayScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF6F8FB),
       appBar: AppBar(
-        title: Text('${widget.round.name} - ${widget.bowType}'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.black87,
+        centerTitle: true,
+        title: Column(
           children: [
             Text(
-              'End ${currentEnd + 1} / ${widget.round.ends}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              '${widget.round.name}',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
+            const SizedBox(height: 2),
             Text(
-              'Arrow ${currentArrow + 1} / ${widget.round.arrowsPerEnd}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            _scoreKeypad(),
-            const SizedBox(height: 16),
-            Expanded(child: _scoreGrid()),
-            const SizedBox(height: 16),
-            Text(
-              'Total Score: $totalScore',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: (currentEnd == widget.round.ends - 1 &&
-                      currentArrow == widget.round.arrowsPerEnd - 1)
-                  ? () async {
-                      // Prepare stats data
-                      final allScores = [
-                        scores.map((endScores) => endScores.map((s) => s as int?).toList()).toList()
-                      ]; // shape: List<List<List<int?>>>
-                      final total = scores.expand((e) => e).fold(0, (a, b) => a + b);
-                      final arrows = scores.expand((e) => e).length;
-                      final int avg = arrows > 0 ? (total / arrows).round() : 0;
-                      final hits = scores.expand((e) => e).where((s) => s > 0).length;
-                      final user = FirebaseAuth.instance.currentUser;
-
-                      // Save session to Firestore
-                      final session = Session(
-                        id: '', // Firestore will generate the ID
-                        date: DateTime.now(),
-                        scores: scores.expand((e) => e).toList(), // Flatten your 2D scores list
-                        remarks: '', // Add remarks if you have
-                        sessionType: widget.round.name,
-                        bowType: widget.bowType,
-                        distance: widget.round.distances.first,
-                        roundId: widget.round.id,
-                        userId: user?.uid,
-                      );
-
-                      await FirebaseFirestore.instance.collection('sessions').add(session.toMap());
-
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => StatsScreen(
-                            round: widget.round,
-                            totalScore: total,
-                            average: avg,
-                            hits: hits,
-                            allScores: allScores,
-                          ),
-                        ),
-                      );
-                    }
-                  : null,
-              child: const Text('Finish & Save'),
+              widget.bowType,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    )
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 72,
+                          height: 72,
+                          child: CircularProgressIndicator(
+                            value: (totalScore / (widget.round.ends * widget.round.arrowsPerEnd * 10)).clamp(0, 1).toDouble(),
+                            strokeWidth: 8,
+                          ),
+                        ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '$totalScore',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            const Text(
+                              'pts',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            )
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'End ${currentEnd + 1} of ${widget.round.ends}',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Arrow ${currentArrow + 1} of ${widget.round.arrowsPerEnd}',
+                            style: const TextStyle(fontSize: 13, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 8),
+                          LinearProgressIndicator(
+                            value: ((currentEnd + (currentArrow / widget.round.arrowsPerEnd)) / widget.round.ends).clamp(0.0, 1.0),
+                            minHeight: 6,
+                            backgroundColor: Colors.grey[200],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(child: _scoreGridCard()),
+                    const SizedBox(height: 12),
+                    _styledKeypad(),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: (currentEnd == widget.round.ends - 1 &&
+                              currentArrow == widget.round.arrowsPerEnd - 1)
+                          ? () async {
+                              final allScores = [
+                                scores.map((endScores) => endScores.map((s) => s as int?).toList()).toList()
+                              ];
+                              final total = scores.expand((e) => e).fold(0, (a, b) => a + b);
+                              final arrows = scores.expand((e) => e).length;
+                              final int avg = arrows > 0 ? (total / arrows).round() : 0;
+                              final hits = scores.expand((e) => e).where((s) => s > 0).length;
+                              final user = FirebaseAuth.instance.currentUser;
+
+                              final session = Session(
+                                id: '',
+                                date: DateTime.now(),
+                                scores: scores.expand((e) => e).toList(),
+                                remarks: '',
+                                sessionType: widget.round.name,
+                                bowType: widget.bowType,
+                                distance: widget.round.distances.first,
+                                roundId: widget.round.id,
+                                userId: user?.uid,
+                              );
+
+                              await FirebaseFirestore.instance.collection('sessions').add(session.toMap());
+
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => StatsScreen(
+                                    round: widget.round,
+                                    totalScore: total,
+                                    average: avg,
+                                    hits: hits,
+                                    allScores: allScores,
+                                  ),
+                                ),
+                              );
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Finish & Save'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _scoreKeypad() {
-    // Scoring logic can be adjusted based on bow type if needed
+  Widget _styledKeypad() {
     List<int> scoreOptions;
     if (widget.round.scoringType == '10-zone') {
       scoreOptions = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
@@ -136,51 +227,120 @@ class _PlayScreenState extends State<PlayScreen> {
       scoreOptions = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
     }
 
-    // Example: Compound bow may use only inner 10 as X (advanced logic can be added)
     if (widget.bowType == 'Compound' && widget.round.scoringType == '10-zone') {
-      scoreOptions = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]; // You can add 'X' logic here
+      scoreOptions = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
     }
 
-    return Wrap(
-      spacing: 8,
-      children: scoreOptions
-          .map((score) => ElevatedButton(
-                onPressed: () => _inputScore(score),
-                child: Text(score == 0 ? 'M' : score.toString()),
-              ))
-          .toList(),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 6))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Score Keypad', style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 220,
+            child: GridView.count(
+              crossAxisCount: 4,
+              childAspectRatio: 1.4,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              physics: const NeverScrollableScrollPhysics(),
+              children: scoreOptions.map((score) {
+                final label = score == 0 ? 'M' : score.toString();
+                return ElevatedButton(
+                  onPressed: () => _inputScore(score),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.all(6),
+                    elevation: 2,
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black87,
+                    side: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      if (score != 0)
+                        Text('pts', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _scoreGrid() {
-    return ListView.builder(
-      itemCount: widget.round.ends,
-      itemBuilder: (context, endIdx) {
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          child: ListTile(
-            title: Text('End ${endIdx + 1}'),
-            subtitle: Row(
-              children: List.generate(
-                widget.round.arrowsPerEnd,
-                (arrowIdx) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: endIdx == currentEnd && arrowIdx == currentArrow
-                        ? Colors.blue[100]
-                        : Colors.grey[200],
-                    child: Text(
-                      scores[endIdx][arrowIdx] == 0 ? '-' : scores[endIdx][arrowIdx].toString(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+  Widget _scoreGridCard() {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 6))
+        ],
+      ),
+      child: ListView.builder(
+        itemCount: widget.round.ends,
+        itemBuilder: (context, endIdx) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 64,
+                  child: Text('End ${endIdx + 1}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List.generate(
+                        widget.round.arrowsPerEnd,
+                        (arrowIdx) {
+                          final val = scores[endIdx][arrowIdx];
+                          final isActive = endIdx == currentEnd && arrowIdx == currentArrow;
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: Column(
+                              children: [
+                                CircleAvatar(
+                                  radius: 22,
+                                  backgroundColor: isActive ? Colors.blue.shade50 : Colors.grey[100],
+                                  child: Text(
+                                    val == 0 ? '-' : val.toString(),
+                                    style: TextStyle(fontWeight: FontWeight.w700, color: isActive ? Colors.blue : Colors.black87),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text('${arrowIdx + 1}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

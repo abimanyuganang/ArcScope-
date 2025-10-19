@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../data/session_repository.dart';
 import '../models/session.dart';
 import 'session_setup_screen.dart';
-import 'session_detail_screen.dart'; 
+import 'session_detail_screen.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -22,20 +25,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // AppBar section
+      // AppBar section with gradient background
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: Row(
           children: [
-            Icon(Icons.architecture, color: Colors.black), // Icon similar to ARCHERZONE logo
+            Icon(FontAwesomeIcons.bullseye, color: Color(0xFF043915)), // Archery-inspired icon
             SizedBox(width: 8),
             Text(
               'ArcScope',
               style: TextStyle(
-                color: Colors.black,
+                color: Color(0xFF043915),
                 fontWeight: FontWeight.bold,
-                fontSize: 18,
+                fontSize: 20,
                 letterSpacing: 1.2,
               ),
             ),
@@ -44,12 +47,18 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             onPressed: () {},
-            icon: Icon(Icons.group, color: Colors.black),
+            icon: Icon(Icons.group, color: Color(0xFF043915)),
           ),
           IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.notifications_none, color: Colors.black),
-          ),
+             onPressed: () async {
+               await FirebaseAuth.instance.signOut();
+               Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false);
+             },
+             icon: Icon(Icons.logout, color: Color(0xFF043915)),
+             tooltip: 'Logout',
+           ),
           SizedBox(width: 12),
         ],
       ),
@@ -65,32 +74,31 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   "Feature Challenge",
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.w600,
+                    color: Color(0xFFB0CE88),
                   ),
                 ),
                 TextButton(
                   onPressed: () {},
                   child: Text(
                     "Show More",
-                    style: TextStyle(color: Colors.blue, fontSize: 14),
+                    style: TextStyle(color: Color(0xFFB0CE88), fontSize: 14),
                   ),
                 ),
               ],
             ),
             SizedBox(height: 12),
 
-            // Challenge Card
+            // Challenge Card with gradient and modern design
             Container(
-              height: 140,
+              height: 150,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
                 image: DecorationImage(
-                  image: NetworkImage(
-                      'https://images.unsplash.com/photo-1506744038136-46273834b3fb'), // Replace with your image
+                  image: NetworkImage('https://images.unsplash.com/photo-1506744038136-46273834b3fb'), 
                   fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                      Colors.black.withOpacity(0.4), BlendMode.darken),
+                  colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.4), BlendMode.darken),
                 ),
               ),
               child: Padding(
@@ -98,38 +106,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // End In badge
                     Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.grey[600]?.withOpacity(0.7),
+                        color: Colors.black.withOpacity(0.7),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         "End In 25 Days",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 12),
                       ),
                     ),
                     Spacer(),
                     Text(
                       "Srikandi Challenge Masters",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     SizedBox(height: 4),
                     Text(
                       "20,352 participants",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),
@@ -137,150 +133,18 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             SizedBox(height: 24),
 
-            // Statistics Heading
+            // Sessions Section: Custom time tabs & clean design
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  "Statistics",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text("Your Sessions", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                 TextButton(
                   onPressed: () {},
-                  child: Text(
-                    "Show More",
-                    style: TextStyle(color: Colors.blue, fontSize: 14),
-                  ),
+                  child: Text("Show More", style: TextStyle(color: Color(0xFFB0CE88), fontSize: 14)),
                 ),
               ],
             ),
             SizedBox(height: 12),
-
-            // Score Distribution Card
-            Container(
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title and Dropdown
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Score Distribution",
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                      DropdownButton<String>(
-                        value: "WA 1440",
-                        items: <String>['WA 1440', 'Other Value']
-                            .map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {},
-                        underline: SizedBox(),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 16),
-
-                  // Tabs for 1D, 1W, 1M, 1Y
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      CustomTimeTab(label: '1D', isSelected: false),
-                      SizedBox(width: 8),
-                      CustomTimeTab(label: '1W', isSelected: true),
-                      SizedBox(width: 8),
-                      CustomTimeTab(label: '1M', isSelected: false),
-                      SizedBox(width: 8),
-                      CustomTimeTab(label: '1Y', isSelected: false),
-                    ],
-                  ),
-
-                  SizedBox(height: 16),
-
-                  // Sample Score Distribution placeholder graph
-                  Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "Score Distribution Graph Here",
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 16),
-
-                  // X-axis labels
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(
-                        11,
-                        (index) => Text(
-                              '${10 - index}',
-                              style: TextStyle(
-                                  color: Colors.grey[400], fontSize: 12),
-                            )),
-                  ),
-
-                  SizedBox(height: 8),
-
-                  // Bottom labels N/A placeholders
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(
-                        11,
-                        (_) => Text(
-                              'N/A',
-                              style: TextStyle(
-                                  color: Colors.grey[400], fontSize: 12),
-                            )),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 24),
-
-            // Sessions Heading
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Your Sessions",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    "Show More",
-                    style: TextStyle(color: Colors.blue, fontSize: 14),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12),
-
-            // Sessions List
             FutureBuilder<List<Session>>(
               future: _sessionsFuture,
               builder: (context, snapshot) {
@@ -302,16 +166,13 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // Bottom Navigation Bar
+      // Bottom Navigation Bar with highlighted active state
       bottomNavigationBar: Container(
         padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
-            BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: Offset(0, -2))
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: Offset(0, -2)),
           ],
         ),
         child: Row(
@@ -321,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.blue[800],
+                  color: Color(0xFF4C763B),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 padding: EdgeInsets.symmetric(vertical: 12),
@@ -330,68 +191,56 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Icon(Icons.home, color: Colors.white),
                     SizedBox(width: 8),
-                    Text(
-                      'Home',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    Text('Home', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
             ),
-
             SizedBox(width: 16),
-
             // Other icons
-            IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.build_outlined, color: Colors.grey),
-              tooltip: "Tools",
-            ),
-            IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.group_outlined, color: Colors.grey),
-              tooltip: "Community",
-            ),
-            IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.more_horiz, color: Colors.grey),
-              tooltip: "More",
-            ),
+            IconButton(onPressed: () {}, icon: Icon(Icons.build_outlined, color: Colors.grey)),
+            IconButton(onPressed: () {}, icon: Icon(Icons.group_outlined, color: Colors.grey)),
+            IconButton(onPressed: () {}, icon: Icon(Icons.more_horiz, color: Colors.grey)),
           ],
         ),
       ),
 
-      // Floating Target Button
-      floatingActionButton: FloatingActionButton(
-      backgroundColor: Colors.blue[800],
-      child: const Icon(Icons.track_changes),
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const SessionSetupScreen()),
-        ).then((_) {
-          setState(() {
-            _sessionsFuture = SessionRepository().getAllSessions();
-          });
-        });
-      },
+      // Floating Action Button (FAB) with gradient effect
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [Color(0xFFB0CE88), Colors.blue[900]!], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(color: Colors.blue.withOpacity(0.4), blurRadius: 12, spreadRadius: 2, offset: Offset(0, 6)),
+            BoxShadow(color: Colors.white24, blurRadius: 6, offset: Offset(-2, -2)),
+          ],
+        ),
+        child: IconButton(
+          icon: Icon(Icons.add, color: Colors.white, size: 32),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SessionSetupScreen()),
+            ).then((_) {
+              setState(() {
+                _sessionsFuture = SessionRepository().getAllSessions();
+              });
+            });
+          },
+        ),
       ),
     );
   }
 
+  // Session Card with modern design and better styling
   Widget _sessionCard(Session session) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 4,
       child: ListTile(
-        leading: Icon(Icons.track_changes, color: Colors.blue[800]),
-        title: Text(
-          session.sessionType ?? "Session",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        leading: Icon(Icons.track_changes, color: Color(0xFFB0CE88)),
+        title: Text(session.sessionType ?? "Session", style: TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(
           "${session.date.toLocal().toString().split(' ')[0]} • Score: ${session.totalScore} • Arrows: ${session.arrowsShot}",
         ),
@@ -409,35 +258,6 @@ class _HomeScreenState extends State<HomeScreen> {
             });
           }
         },
-      ),
-    );
-  }
-}
-
-// Widget for Time tab with selection highlighting
-class CustomTimeTab extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-
-  const CustomTimeTab({required this.label, required this.isSelected});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.blue[800] : Colors.transparent,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isSelected ? Colors.blue[800]! : Colors.grey.shade300,
-        ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.grey[600],
-          fontWeight: FontWeight.w600,
-        ),
       ),
     );
   }

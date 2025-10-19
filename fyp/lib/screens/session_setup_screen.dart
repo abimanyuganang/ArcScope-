@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/animation.dart';  // Imported for subtle animations
 import '../models/archery_models.dart';
 import '../models/session.dart';
 import '../data/session_repository.dart';
@@ -70,7 +71,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
   ArcheryRound get selectedRound => ArcheryRound(
     id: 'custom',
     name: 'Custom Session',
-    discipline: ArcheryDiscipline.outdoor, // You can add a dropdown for discipline if needed
+    discipline: ArcheryDiscipline.outdoor,
     distances: [_distance],
     totalArrows: _ends * _arrowsPerEnd,
     targetSize: _targetType == 'FITA' ? 122 : 40,
@@ -88,18 +89,31 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(widget.session != null ? 'Edit Session' : 'Session Setup', style: const TextStyle(color: Colors.black)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: Text(widget.session != null ? 'Edit Session' : 'Session Setup', style: const TextStyle(color: Color(0xFF4C763B), fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.green[800],
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFB0CE88), const Color(0xFFFFFD8F)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        elevation: 6,
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: SingleChildScrollView(
-          child: _buildDetailsForm(context),
+          child: AnimatedOpacity(
+            opacity: 1.0,
+            duration: const Duration(milliseconds: 500),
+            child: _buildDetailsForm(context),
+          ),
         ),
       ),
       bottomNavigationBar: SafeArea(
@@ -111,7 +125,12 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    backgroundColor: Color(0xFF4C763B),
+                    foregroundColor: Colors.white,
+                    elevation: 4,
                   ),
                   onPressed: widget.session != null
                       ? () async {
@@ -146,7 +165,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
               const SizedBox(width: 12),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: const Text('Cancel', style: TextStyle(color: const Color(0xFF4C763B), fontWeight: FontWeight.w500)),
               ),
             ],
           ),
@@ -159,145 +178,219 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Date & Time
-        ListTile(
-          leading: const Icon(Icons.calendar_today),
-          title: const Text('Date & Time*'),
-          subtitle: Text('${_dateTime.month}/${_dateTime.day}/${_dateTime.year}, ${_dateTime.hour.toString().padLeft(2, '0')}:${_dateTime.minute.toString().padLeft(2, '0')}'),
-          trailing: IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: _dateTime,
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2100),
-              );
-              if (picked != null) {
-                final time = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.fromDateTime(_dateTime),
-                );
-                setState(() {
-                  _dateTime = DateTime(
-                    picked.year,
-                    picked.month,
-                    picked.day,
-                    time?.hour ?? _dateTime.hour,
-                    time?.minute ?? _dateTime.minute,
+        // Card for Date & Time
+        Card(
+          elevation: 4,  // Subtle shadow for depth
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: ListTile(
+              leading: const Icon(Icons.calendar_today, color: Colors.green),
+              title: const Text('Date & Time*', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+              subtitle: Text('${_dateTime.month}/${_dateTime.day}/${_dateTime.year}, ${_dateTime.hour.toString().padLeft(2, '0')}:${_dateTime.minute.toString().padLeft(2, '0')}'),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit, color: const Color(0xFFB0CE88)),
+                onPressed: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: _dateTime,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
                   );
-                });
-              }
-            },
+                  if (picked != null) {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.fromDateTime(_dateTime),
+                    );
+                    setState(() {
+                      _dateTime = DateTime(
+                        picked.year,
+                        picked.month,
+                        picked.day,
+                        time?.hour ?? _dateTime.hour,
+                        time?.minute ?? _dateTime.minute,
+                      );
+                    });
+                  }
+                },
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: 16),
-
-        // Location Type Dropdown
-        Row(
-          children: [
-            const Icon(Icons.location_on_outlined),
-            const SizedBox(width: 8),
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                value: _locationType,
-                items: _locationTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                onChanged: (v) => setState(() => _locationType = v ?? 'Indoor'),
-                decoration: const InputDecoration(labelText: 'Location Type'),
-              ),
+        
+        // Card for Location Settings
+        Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Location Settings', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 16)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on_outlined, color: Colors.green),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _locationType,
+                        items: _locationTypes.map((t) => DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(color: Colors.black87)))).toList(),
+                        onChanged: (v) => setState(() => _locationType = v ?? 'Indoor'),
+                        decoration: const InputDecoration(
+                          labelText: 'Location Type',
+                          labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Location (e.g., Local Range)',
+                    prefixIcon: Icon(Icons.map, color: Colors.green),
+                    labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
+                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
+                  ),
+                  onChanged: (v) => setState(() => _locationText = v),
+                ),
+              ],
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-
-        // Location Free Text
-        TextFormField(
-          decoration: const InputDecoration(
-            labelText: 'Location (e.g., Local Range)',
-            prefixIcon: Icon(Icons.map),
           ),
-          onChanged: (v) => setState(() => _locationText = v),
         ),
-        const SizedBox(height: 16),
-
-        // Distance Dropdown
-        Row(
-          children: [
-            const Icon(Icons.straighten),
-            const SizedBox(width: 8),
-            Expanded(
-              child: DropdownButtonFormField<double>(
-                value: _distance,
-                items: _distances.map((d) => DropdownMenuItem(value: d, child: Text('${d.toInt()}m'))).toList(),
-                onChanged: (v) => setState(() => _distance = v ?? 18),
-                decoration: const InputDecoration(labelText: 'Distance*'),
-              ),
+        
+        // Card for Shooting Details
+        Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Shooting Details', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 16)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.straighten, color: Colors.green),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<double>(
+                        value: _distance,
+                        items: _distances.map((d) => DropdownMenuItem(value: d, child: Text('${d.toInt()}m', style: const TextStyle(color: Colors.black87)))).toList(),
+                        onChanged: (v) => setState(() => _distance = v ?? 18),
+                        decoration: const InputDecoration(
+                          labelText: 'Distance*',
+                          labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Icon(Icons.adjust, color: Colors.green),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _targetType,
+                        items: _targetTypes.map((t) => DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(color: Colors.black87)))).toList(),
+                        onChanged: (v) => _updateArrowsPerEnd(v ?? 'FITA'),
+                        decoration: const InputDecoration(
+                          labelText: 'Target Type*',
+                          labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Icon(Icons.architecture, color: Colors.green),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _bowType,
+                        items: _bowTypes.map((b) => DropdownMenuItem(value: b, child: Text(b, style: const TextStyle(color: Colors.black87)))).toList(),
+                        onChanged: (v) => setState(() => _bowType = v ?? 'Recurve'),
+                        decoration: const InputDecoration(
+                          labelText: 'Bow Type*',
+                          labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Target Type
-        Row(
-          children: [
-            const Icon(Icons.adjust),
-            const SizedBox(width: 8),
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                value: _targetType,
-                items: _targetTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-                onChanged: (v) => _updateArrowsPerEnd(v ?? 'FITA'),
-                decoration: const InputDecoration(labelText: 'Target Type*'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Bow Type Dropdown
-        Row(
-          children: [
-            const Icon(Icons.architecture),
-            const SizedBox(width: 8),
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                value: _bowType,
-                items: _bowTypes.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
-                onChanged: (v) => setState(() => _bowType = v ?? 'Recurve'),
-                decoration: const InputDecoration(labelText: 'Bow Type*'),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Number of Ends
-        Row(
-          children: [
-            const Icon(Icons.confirmation_num_outlined),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextFormField(
-                initialValue: _ends.toString(),
-                decoration: const InputDecoration(labelText: 'Number of Ends'),
-                keyboardType: TextInputType.number,
-                onChanged: (v) => setState(() => _ends = int.tryParse(v) ?? 6),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Notes
-        TextFormField(
-          decoration: const InputDecoration(
-            labelText: 'Notes (e.g., Windy conditions, 10mph)',
-            prefixIcon: Icon(Icons.note),
           ),
-          maxLines: 2,
-          onChanged: (v) => setState(() => _notes = v),
+        ),
+        
+        // Card for Additional Settings
+        Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          margin: const EdgeInsets.only(bottom: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Additional Settings', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 16)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.confirmation_num_outlined, color: Colors.green),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: _ends.toString(),
+                        decoration: const InputDecoration(
+                          labelText: 'Number of Ends',
+                          labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
+                          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
+                        ),
+                        keyboardType: TextInputType.number,
+                        onChanged: (v) => setState(() => _ends = int.tryParse(v) ?? 6),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Notes (e.g., Windy conditions, 10mph)',
+                    prefixIcon: Icon(Icons.note, color: Colors.green),
+                    labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
+                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
+                  ),
+                  maxLines: 2,
+                  onChanged: (v) => setState(() => _notes = v),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
   }
 }
+

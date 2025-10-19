@@ -34,22 +34,22 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
       builder: (context, sessionSnapshot) {
         if (sessionSnapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
-            appBar: AppBar(title: Text('Session Detail')),
-            body: Center(child: CircularProgressIndicator()),
+            appBar: AppBar(title: const Text('Session Detail')),
+            body: const Center(child: CircularProgressIndicator()),
           );
         }
 
         if (sessionSnapshot.hasError) {
           return Scaffold(
-            appBar: AppBar(title: Text('Session Detail')),
+            appBar: AppBar(title: const Text('Session Detail')),
             body: Center(child: Text('Error: ${sessionSnapshot.error}')),
           );
         }
 
         if (!sessionSnapshot.hasData) {
           return Scaffold(
-            appBar: AppBar(title: Text('Session Detail')),
-            body: Center(child: Text('Session not found')),
+            appBar: AppBar(title: const Text('Session Detail')),
+            body: const Center(child: Text('Session not found')),
           );
         }
 
@@ -60,8 +60,8 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
           builder: (context, allSnapshot) {
             if (!allSnapshot.hasData) {
               return Scaffold(
-                appBar: AppBar(title: Text('Session Detail')),
-                body: Center(child: CircularProgressIndicator()),
+                appBar: AppBar(title: const Text('Session Detail')),
+                body: const Center(child: CircularProgressIndicator()),
               );
             }
 
@@ -78,23 +78,21 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
 
             return Scaffold(
               appBar: AppBar(
-                title: const Text('Session Detail'),
+                backgroundColor: Color(0xFFB0CE88), // Gradient can be applied here
+                elevation: 4,
+                title: const Text('Session Detail', style: TextStyle(fontWeight: FontWeight.bold)),
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.edit),
                     tooltip: 'Edit Session',
                     onPressed: () {
-                      // Navigate to SessionSetupScreen with this session for editing
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => SessionSetupScreen(
-                            session: s, // Pass the session object (you may need to adjust SessionSetupScreen to accept it)
-                          ),
+                          builder: (_) => SessionSetupScreen(session: s),
                         ),
                       ).then((_) {
                         setState(() {
-                          // Refresh session after editing
                           final repo = SessionRepository();
                           _allSessionsFuture = repo.getAllSessions();
                           _sessionFuture = _allSessionsFuture.then((sessions) => sessions.firstWhere((e) => e.id == widget.sessionId));
@@ -120,13 +118,13 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                       if (confirm == true) {
                         await SessionRepository().deleteSession(s.id);
                         if (context.mounted) {
-                          Navigator.of(context).pop('deleted'); // Pass 'deleted' back to HomeScreen
+                          Navigator.of(context).pop('deleted');
                         }
                       }
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.ios_share),
+                    icon: const Icon(Icons.ios_share, color: Colors.white),
                     onPressed: () async {
                       final rows = <List<dynamic>>[
                         ['Date', s.date.toIso8601String()],
@@ -165,8 +163,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                   ]),
                   const SizedBox(height: 12),
                   if (improvement != null)
-                    Text('Improvement vs previous: ${improvement >= 0 ? '+' : ''}${improvement.toStringAsFixed(2)}',
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text('Improvement vs previous: ${improvement >= 0 ? '+' : ''}${improvement.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 12),
                   const Text('Distribution'),
                   const SizedBox(height: 6),
@@ -177,11 +174,15 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                         barGroups: barSpots,
                         titlesData: FlTitlesData(
                           leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
-                          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (value, meta) {
-                            final label = value == 11 ? 'X' : value == -1 ? 'M' : value.toInt().toString();
-                            return Text(label, style: const TextStyle(fontSize: 12));
-                          })),
+                          bottomTitles: AxisTitles(sideTitles: SideTitles(
+                            showTitles: true, 
+                            getTitlesWidget: (value, meta) {
+                              final label = value == 11 ? 'X' : value == -1 ? 'M' : value.toInt().toString();
+                              return Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold));
+                            }
+                          )),
                         ),
+                        borderData: FlBorderData(show: true, border: Border.all(color: Colors.black26, width: 1)),
                       ),
                     ),
                   ),
@@ -195,10 +196,9 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                   const Text('Insights', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ...s.insights.map((i) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Text('• $i', style: const TextStyle(color: Colors.deepPurple)),
+                    child: Text('• $i', style: const TextStyle(color: Color(0xFF4C763B))),
                   )),
                   const SizedBox(height: 24),
-                  // TODO (PDF export - optional): build a simple pdf with the same data using 'pdf' + 'printing' packages.
                 ],
               ),
             );
@@ -210,9 +210,26 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
 
   Widget _tag(String t) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(10)),
-      child: Text(t),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.deepPurple.shade50,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Text(
+        t,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF4C763B),
+        ),
+      ),
     );
   }
 }
