@@ -6,6 +6,7 @@ import '../models/session.dart';
 import 'session_setup_screen.dart';
 import 'session_detail_screen.dart';
 import 'login_screen.dart';
+import 'timer_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -198,7 +199,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             SizedBox(width: 16),
             // Other icons
-            IconButton(onPressed: () {}, icon: Icon(Icons.build_outlined, color: Colors.grey)),
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TimerScreen()),
+                );
+              },
+              icon: Icon(Icons.timer_outlined, color: Colors.grey)
+            ),
             IconButton(onPressed: () {}, icon: Icon(Icons.group_outlined, color: Colors.grey)),
             IconButton(onPressed: () {}, icon: Icon(Icons.more_horiz, color: Colors.grey)),
           ],
