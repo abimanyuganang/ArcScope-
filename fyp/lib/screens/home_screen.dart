@@ -7,6 +7,7 @@ import 'session_setup_screen.dart';
 import 'session_detail_screen.dart';
 import 'login_screen.dart';
 import 'timer_screen.dart';
+import 'equipment_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -208,7 +209,15 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               icon: Icon(Icons.timer_outlined, color: Colors.grey)
             ),
-            IconButton(onPressed: () {}, icon: Icon(Icons.group_outlined, color: Colors.grey)),
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EquipmentScreen()),
+                );
+              },
+              icon: Icon(Icons.arrow_right_alt, color: Colors.grey)
+            ),
             IconButton(onPressed: () {}, icon: Icon(Icons.more_horiz, color: Colors.grey)),
           ],
         ),
