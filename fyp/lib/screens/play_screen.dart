@@ -252,7 +252,7 @@ class _PlayScreenState extends State<PlayScreen> {
               childAspectRatio: 1.4,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
-              physics: const NeverScrollableScrollPhysics(),
+              //physics: const NeverScrollableScrollPhysics(),
               children: scoreOptions.map((score) {
                 final label = score == 0 ? 'M' : score.toString();
                 return ElevatedButton(

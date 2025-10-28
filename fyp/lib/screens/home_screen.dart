@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       // AppBar section with gradient background
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.greenAccent[100],
         elevation: 0,
         title: Row(
           children: [
@@ -47,10 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.group, color: Color(0xFF043915)),
-          ),
+
           IconButton(
              onPressed: () async {
                await FirebaseAuth.instance.signOut();

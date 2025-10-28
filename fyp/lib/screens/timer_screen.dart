@@ -222,7 +222,7 @@ class _TimerScreenState extends State<TimerScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'Tap anywhere to start timer',
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(color: Colors.white),
                 ),
               ],
             ),
