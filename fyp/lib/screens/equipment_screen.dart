@@ -145,6 +145,7 @@ class _EquipmentScreenState extends State<EquipmentScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.greenAccent[100],
         title: const Text('Equipment Setup'),
         bottom: TabBar(
           controller: _tabController,

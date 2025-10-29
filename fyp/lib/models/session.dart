@@ -11,6 +11,8 @@ class Session {
   double? distance;
   String? roundId;
   String? userId;
+  int? ends;
+  int? arrowsPerEnd;
 
   Session({
     required this.id,
@@ -22,6 +24,8 @@ class Session {
     this.distance,
     this.roundId,
     this.userId,
+    this.ends,
+    this.arrowsPerEnd,
   }) : arrowsShot = scores.length;
 
   int get totalScore => scores.fold<int>(0, (s, v) {
@@ -45,6 +49,8 @@ class Session {
       'distance': distance,
       'roundId': roundId,
       'userId': userId,
+      'ends': ends,
+      'arrowsPerEnd': arrowsPerEnd,
     };
   }
 
@@ -61,6 +67,8 @@ class Session {
       distance: data['distance'],
       roundId: data['roundId'],
       userId: data['userId'],
+      ends: data['ends'],
+      arrowsPerEnd: data['arrowsPerEnd'],
     );
   }
 }

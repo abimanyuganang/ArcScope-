@@ -100,6 +100,7 @@ class _TimerScreenState extends State<TimerScreen> {
               },
               controller: TextEditingController(text: _walkTime.toString()),
             ),
+            SizedBox(height: 10,),
             TextField(
               decoration: const InputDecoration(labelText: 'Shooting time (seconds)'),
               keyboardType: TextInputType.number,
@@ -110,6 +111,7 @@ class _TimerScreenState extends State<TimerScreen> {
               },
               controller: TextEditingController(text: _shootTime.toString()),
             ),
+            SizedBox(height: 10,),
             TextField(
               decoration: const InputDecoration(labelText: 'Warning time (seconds)'),
               keyboardType: TextInputType.number,
@@ -175,6 +177,7 @@ class _TimerScreenState extends State<TimerScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.greenAccent[100],
         title: const Text('Archery Timer'),
         actions: [
           IconButton(

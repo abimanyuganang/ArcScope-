@@ -38,7 +38,7 @@ dependencies:
   firebase_auth: ^5.6.0
   provider: ^6.1.5
   fluttertoast: ^8.2.12
-  fl_chart: ^0.68.0  # For charts and statistics visualization
+  fl_chart: 1.1.1  # For charts and statistics visualization
   share_plus: ^10.0.2  # For sharing files, e.g., CSV/Stats export
   csv: ^6.0.0  # For exporting data as CSV
   vibration: ^1.9.0  # For vibration support (countdown timer)

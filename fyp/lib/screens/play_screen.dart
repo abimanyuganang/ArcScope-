@@ -216,71 +216,103 @@ class _PlayScreenState extends State<PlayScreen> {
   }
 
   Widget _styledKeypad() {
-    List<int> scoreOptions;
-    if (widget.round.scoringType == '10-zone') {
-      scoreOptions = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-    } else if (widget.round.scoringType == 'field') {
-      scoreOptions = [5, 4, 3, 2, 1, 0];
-    } else if (widget.round.scoringType == '3D') {
-      scoreOptions = [10, 8, 5, 0];
-    } else {
-      scoreOptions = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-    }
-
-    if (widget.bowType == 'Compound' && widget.round.scoringType == '10-zone') {
-      scoreOptions = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 6))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text('Score Keypad', style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 220,
-            child: GridView.count(
-              crossAxisCount: 4,
-              childAspectRatio: 1.4,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              //physics: const NeverScrollableScrollPhysics(),
-              children: scoreOptions.map((score) {
-                final label = score == 0 ? 'M' : score.toString();
-                return ElevatedButton(
-                  onPressed: () => _inputScore(score),
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.all(6),
-                    elevation: 2,
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black87,
-                    side: BorderSide(color: Colors.grey.shade200),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      if (score != 0)
-                        Text('pts', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
+  List<dynamic> scoreOptions;
+  if (widget.round.scoringType == '10-zone') {
+    scoreOptions = ['X', 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,]; // Add 'X' for 10-zone
+  } else if (widget.round.scoringType == 'field') {
+    scoreOptions = [5, 4, 3, 2, 1, 0];
+  } else if (widget.round.scoringType == '3D') {
+    scoreOptions = [10, 8, 5, 0];
+  } else {
+    scoreOptions = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
   }
+
+  if (widget.bowType == 'Compound' && widget.round.scoringType == '10-zone') {
+    scoreOptions = ['X', 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+  }
+
+  // Function to determine the background color based on score
+  Color getButtonColor(score) {
+    if (score == 'X') {
+      return Colors.yellow;
+    } else if (score == 10 || score == 9) {
+      return Colors.yellow;
+    } else if (score == 8 || score == 7) {
+      return Colors.red;
+    } else if (score == 6 || score == 5) {
+      return Colors.blue;
+    } else if (score == 4 || score == 3) {
+      return Colors.black;
+    } else if (score == 2 || score == 1) {
+      return Colors.white;
+    } else if (score == 0) {
+      return Colors.green;
+    }
+    return Colors.white; // Default case
+  }
+  
+  return Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 6))
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('Score Keypad', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 220,
+          child: GridView.count(
+            crossAxisCount: 4,
+            childAspectRatio: 1.4,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            children: scoreOptions.map((score) {
+              final label = score == 0 ? 'M' : score.toString();
+              Color buttonColor = getButtonColor(score);
+              Color textColor = (score == 4 || score == 3) ? Colors.white : Colors.black;
+              return ElevatedButton(
+                onPressed: () {
+                  final intValue = (score == 'X') ? 10 : (score as int);
+                  _inputScore(intValue); // Call the function with the correctly typed value
+                },
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.all(6),
+                  elevation: 2,
+                  backgroundColor: getButtonColor(score), // Set the color dynamically
+                  foregroundColor: Colors.black87,
+                  side: BorderSide(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textColor, 
+                      ),
+                    ),
+                    if (score != 0)
+                      Text('pts', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _scoreGridCard() {
     return Container(

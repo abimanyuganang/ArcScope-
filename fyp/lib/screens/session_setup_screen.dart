@@ -393,4 +393,3 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
     );
   }
 }
-

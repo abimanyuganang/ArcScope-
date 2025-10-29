@@ -5,7 +5,6 @@ import 'package:csv/csv.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../data/session_repository.dart';
 import '../models/session.dart';
-import 'session_setup_screen.dart';
 
 class SessionDetailScreen extends StatefulWidget {
   final String sessionId;
@@ -83,24 +82,6 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                 title: const Text('Session Detail', style: TextStyle(fontWeight: FontWeight.bold)),
                 actions: [
                   IconButton(
-                    icon: const Icon(Icons.edit),
-                    tooltip: 'Edit Session',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => SessionSetupScreen(session: s),
-                        ),
-                      ).then((_) {
-                        setState(() {
-                          final repo = SessionRepository();
-                          _allSessionsFuture = repo.getAllSessions();
-                          _sessionFuture = _allSessionsFuture.then((sessions) => sessions.firstWhere((e) => e.id == widget.sessionId));
-                        });
-                      });
-                    },
-                  ),
-                  IconButton(
                     icon: const Icon(Icons.delete),
                     tooltip: 'Delete Session',
                     onPressed: () async {
@@ -154,7 +135,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> {
                 children: [
                   Text('${s.date.toLocal()}'.split(' ').first, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
-                  Wrap(spacing: 8, children: [
+                  Wrap(spacing: 8,runSpacing: 15, children: [
                     _tag('Total: ${s.totalScore}'),
                     _tag('Avg: ${s.average.toStringAsFixed(2)}'),
                     if (s.sessionType != null) _tag('Type: ${s.sessionType}'),
