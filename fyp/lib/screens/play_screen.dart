@@ -52,7 +52,7 @@ class _PlayScreenState extends State<PlayScreen> {
       backgroundColor: const Color(0xFFF6F8FB),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.greenAccent,
         foregroundColor: Colors.black87,
         centerTitle: true,
         title: Column(
@@ -77,7 +77,7 @@ class _PlayScreenState extends State<PlayScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.greenAccent[100],
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -231,7 +231,6 @@ class _PlayScreenState extends State<PlayScreen> {
     scoreOptions = ['X', 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
   }
 
-  // Function to determine the background color based on score
   Color getButtonColor(score) {
     if (score == 'X') {
       return Colors.yellow;
@@ -254,7 +253,7 @@ class _PlayScreenState extends State<PlayScreen> {
   return Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: Colors.greenAccent[100],
       borderRadius: BorderRadius.circular(12),
       boxShadow: [
         BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 6))
@@ -265,60 +264,52 @@ class _PlayScreenState extends State<PlayScreen> {
       children: [
         const Text('Score Keypad', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 220,
-          child: GridView.count(
-            crossAxisCount: 4,
-            childAspectRatio: 1.4,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            children: scoreOptions.map((score) {
-              final label = score == 0 ? 'M' : score.toString();
-              Color buttonColor = getButtonColor(score);
-              Color textColor = (score == 4 || score == 3) ? Colors.white : Colors.black;
-              return ElevatedButton(
-                onPressed: () {
-                  final intValue = (score == 'X') ? 10 : (score as int);
-                  _inputScore(intValue); // Call the function with the correctly typed value
-                },
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.all(6),
-                  elevation: 2,
-                  backgroundColor: getButtonColor(score), // Set the color dynamically
-                  foregroundColor: Colors.black87,
-                  side: BorderSide(color: Colors.grey.shade200),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: textColor, 
-                      ),
-                    ),
-                    if (score != 0)
-                      Text('pts', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ),
+        GridView.count(
+          shrinkWrap: true,                              // fit height to content
+          physics: const NeverScrollableScrollPhysics(), // disable scrolling
+          crossAxisCount: 4,
+          childAspectRatio: 1.4,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+          children: scoreOptions.map((score) {
+            final label = score == 0 ? 'M' : score.toString();
+            final bg = getButtonColor(score);
+            final textColor = (score == 4 || score == 3) ? Colors.white : Colors.black;
+
+            return ElevatedButton(
+              onPressed: () {
+                final intValue = (score == 'X') ? 11 : (score as int);
+                _inputScore(intValue);
+              },
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.all(6),
+                elevation: 2,
+                backgroundColor: bg,
+                foregroundColor: Colors.black87,
+                side: BorderSide(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(label, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
+                  if (score != 0)
+                    Text('pts', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                ],
+              ),
+            );
+          }).toList(),
+        )
       ],
     ),
   );
 }
-
-
+  
   Widget _scoreGridCard() {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.greenAccent[100],
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 6))
@@ -344,25 +335,62 @@ class _PlayScreenState extends State<PlayScreen> {
                       children: List.generate(
                         widget.round.arrowsPerEnd,
                         (arrowIdx) {
-                          final val = scores[endIdx][arrowIdx];
+                          final raw = scores[endIdx][arrowIdx];                  // may be 11 for X
                           final isActive = endIdx == currentEnd && arrowIdx == currentArrow;
+
+                          // treat 11 (X) as numeric 10 for color
+                          int numeric(int v) => v == 11 ? 10 : v;
+
+                          // color map (same as keypad)
+                          Color bgFor(int s) {
+                            if (s == 10 || s == 9) return Colors.yellow;
+                            if (s == 8 || s == 7)  return Colors.red;
+                            if (s == 6 || s == 5)  return Colors.blue;
+                            if (s == 4 || s == 3)  return Colors.black;
+                            if (s == 2 || s == 1)  return Colors.white;
+                            if (s == 0)            return Colors.green;
+                            return Colors.white;
+                          }
+
+                          Color fgFor(Color bg) => bg.computeLuminance() < 0.5 ? Colors.white : Colors.black;
+
+                          // simplest “filled” logic: anything before the cursor is filled
+                          bool filled = (endIdx < currentEnd) || (endIdx == currentEnd && arrowIdx < currentArrow);
+
+                          // background & label
+                          final Color bg = filled ? bgFor(numeric(raw)) : (Colors.grey[100]!);
+                          final Color fg = fgFor(bg);
+                          final String label = !filled
+                              ? '-'                        // not entered yet
+                              : (raw == 11 ? 'X'           // show X
+                                          : (numeric(raw) == 0 ? 'M' : numeric(raw).toString()));
+
                           return Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 6),
                             child: Column(
                               children: [
-                                CircleAvatar(
-                                  radius: 22,
-                                  backgroundColor: isActive ? Colors.blue.shade50 : Colors.grey[100],
-                                  child: Text(
-                                    val == 0 ? '-' : val.toString(),
-                                    style: TextStyle(fontWeight: FontWeight.w700, color: isActive ? Colors.blue : Colors.black87),
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: bg,
+                                    border: Border.all(
+                                      color: isActive
+                                          ? Colors.blue
+                                          : (bg == Colors.white ? Colors.grey.shade300 : Colors.transparent),
+                                      width: isActive ? 2 : 1,
+                                    ),
                                   ),
+                                  child: Text(label, style: TextStyle(fontWeight: FontWeight.w700, color: fg)),
                                 ),
                                 const SizedBox(height: 6),
                                 Text('${arrowIdx + 1}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                               ],
                             ),
                           );
+
                         },
                       ),
                     ),
