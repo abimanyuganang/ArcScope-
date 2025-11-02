@@ -104,6 +104,8 @@ class StatsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Statistics'),
+        backgroundColor: Colors.greenAccent,
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.home),
