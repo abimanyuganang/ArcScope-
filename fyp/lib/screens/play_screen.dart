@@ -16,6 +16,7 @@ class PlayScreen extends StatefulWidget {
 }
 
 class _PlayScreenState extends State<PlayScreen> {
+  static const int emptyCell = -1; // ← changed: sentinel for "no input yet"
   late List<List<int>> scores;
   int currentEnd = 0;
   int currentArrow = 0;
@@ -25,24 +26,47 @@ class _PlayScreenState extends State<PlayScreen> {
     super.initState();
     scores = List.generate(
       widget.round.ends,
-      (_) => List.filled(widget.round.arrowsPerEnd, 0),
+      (_) => List.filled(widget.round.arrowsPerEnd, emptyCell), // ← changed
     );
   }
 
   void _inputScore(int value) {
+    final lastEnd = widget.round.ends - 1;
+    final lastArrow = widget.round.arrowsPerEnd - 1;
+
+    // guard: if we’re truly at the last slot and it already has a value, stop
+    if (currentEnd == lastEnd && currentArrow == lastArrow && scores[currentEnd][currentArrow] != emptyCell) {
+      return;
+    }
+
     setState(() {
       scores[currentEnd][currentArrow] = value;
-      if (currentArrow < widget.round.arrowsPerEnd - 1) {
+      if (currentArrow < lastArrow) {
         currentArrow++;
-      } else if (currentEnd < widget.round.ends - 1) {
+      } else if (currentEnd < lastEnd) {
         currentEnd++;
         currentArrow = 0;
       }
     });
   }
 
-  int get totalScore =>
-      scores.expand((endScores) => endScores).fold(0, (a, b) => a + b);
+  int get totalScore {
+    // Treat empty as 0; cap X(11) at 10 for totals/progress display
+    return scores
+        .expand((e) => e)
+        .where((s) => s != emptyCell)
+        .map((s) => s.clamp(0, 10)) // ← changed: X counts as 10 visually
+        .fold(0, (a, b) => a + b);
+  }
+
+  bool get allFilled => scores.every((e) => e.every((s) => s != emptyCell)); // ← changed
+
+  double get progressValue {
+    final maxPoints = (widget.round.ends * widget.round.arrowsPerEnd * 10).toDouble();
+    return (maxPoints == 0)
+        ? 0
+        : (totalScore / maxPoints).clamp(0, 1).toDouble();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +80,7 @@ class _PlayScreenState extends State<PlayScreen> {
         title: Column(
           children: [
             Text(
-              '${widget.round.name}',
+              widget.round.name, // minor clean-up
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 2),
@@ -94,7 +118,7 @@ class _PlayScreenState extends State<PlayScreen> {
                           width: 72,
                           height: 72,
                           child: CircularProgressIndicator(
-                            value: (totalScore / (widget.round.ends * widget.round.arrowsPerEnd * 10)).clamp(0, 1).toDouble(),
+                            value: progressValue, // ← changed
                             strokeWidth: 8,
                           ),
                         ),
@@ -129,7 +153,8 @@ class _PlayScreenState extends State<PlayScreen> {
                           ),
                           const SizedBox(height: 8),
                           LinearProgressIndicator(
-                            value: ((currentEnd + (currentArrow / widget.round.arrowsPerEnd)) / widget.round.ends).clamp(0.0, 1.0),
+                            value: ((currentEnd + (currentArrow / widget.round.arrowsPerEnd)) / widget.round.ends)
+                                .clamp(0.0, 1.0),
                             minHeight: 6,
                             backgroundColor: Colors.grey[200],
                           ),
@@ -157,22 +182,31 @@ class _PlayScreenState extends State<PlayScreen> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: (currentEnd == widget.round.ends - 1 &&
-                              currentArrow == widget.round.arrowsPerEnd - 1)
+                      onPressed: allFilled // ← changed: enable only when every cell has input
                           ? () async {
-                              final allScores = [
-                                scores.map((endScores) => endScores.map((s) => s as int?).toList()).toList()
-                              ];
-                              final total = scores.expand((e) => e).fold(0, (a, b) => a + b);
-                              final arrows = scores.expand((e) => e).length;
+                              // Build stats safely using empties-as-zero and X=10 for averages/hits
+                              final flat = scores.expand((e) => e).toList();
+                              final effective = flat.map((s) => s == emptyCell ? 0 : s.clamp(0, 10)).toList();
+                              final total = effective.fold(0, (a, b) => a + b);
+                              final arrows = effective.length;
                               final int avg = arrows > 0 ? (total / arrows).round() : 0;
-                              final hits = scores.expand((e) => e).where((s) => s > 0).length;
+                              final hits = effective.where((s) => s > 0).length;
+
+                              // Keep your original allScores structure if StatsScreen expects it
+                              final allScores = [
+                                scores
+                                    .map((endScores) => endScores
+                                        .map((s) => s == emptyCell ? 0 : s.clamp(0, 10)) // ← changed
+                                        .toList())
+                                    .toList()
+                              ];
+
                               final user = FirebaseAuth.instance.currentUser;
 
                               final session = Session(
                                 id: '',
                                 date: DateTime.now(),
-                                scores: scores.expand((e) => e).toList(),
+                                scores: effective, // ← changed: store flattened effective scores
                                 remarks: '',
                                 sessionType: widget.round.name,
                                 bowType: widget.bowType,
@@ -183,6 +217,7 @@ class _PlayScreenState extends State<PlayScreen> {
 
                               await FirebaseFirestore.instance.collection('sessions').add(session.toMap());
 
+                              if (!mounted) return;
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
@@ -214,96 +249,110 @@ class _PlayScreenState extends State<PlayScreen> {
   }
 
   Widget _styledKeypad() {
-  List<dynamic> scoreOptions;
-  if (widget.round.scoringType == '10-zone') {
-    scoreOptions = ['X', 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,]; // Add 'X' for 10-zone
-  } else if (widget.round.scoringType == 'field') {
-    scoreOptions = [5, 4, 3, 2, 1, 0];
-  } else if (widget.round.scoringType == '3D') {
-    scoreOptions = [10, 8, 5, 0];
-  } else {
-    scoreOptions = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-  }
+    final bool isFinished = allFilled; // ← changed
 
-  if (widget.bowType == 'Compound' && widget.round.scoringType == '10-zone') {
-    scoreOptions = ['X', 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-  }
-
-  Color getButtonColor(score) {
-    if (score == 'X') {
-      return Colors.yellow;
-    } else if (score == 10 || score == 9) {
-      return Colors.yellow;
-    } else if (score == 8 || score == 7) {
-      return Colors.red;
-    } else if (score == 6 || score == 5) {
-      return Colors.blue;
-    } else if (score == 4 || score == 3) {
-      return Colors.black;
-    } else if (score == 2 || score == 1) {
-      return Colors.white;
-    } else if (score == 0) {
-      return Colors.green;
+    List<dynamic> scoreOptions;
+    if (widget.round.scoringType == '10-zone') {
+      scoreOptions = ['X', 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+    } else if (widget.round.scoringType == 'field') {
+      scoreOptions = [5, 4, 3, 2, 1, 0];
+    } else if (widget.round.scoringType == '3D') {
+      scoreOptions = [10, 8, 5, 0];
+    } else {
+      scoreOptions = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
     }
-    return Colors.white; // Default case
-  }
-  
-  return Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.greenAccent[100],
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 6))
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text('Score Keypad', style: TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        GridView.count(
-          shrinkWrap: true,                              // fit height to content
-          physics: const NeverScrollableScrollPhysics(), // disable scrolling
-          crossAxisCount: 4,
-          childAspectRatio: 1.4,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-          children: scoreOptions.map((score) {
-            final label = score == 0 ? 'M' : score.toString();
-            final bg = getButtonColor(score);
-            final textColor = (score == 4 || score == 3) ? Colors.white : Colors.black;
+    if (widget.bowType == 'Compound' && widget.round.scoringType == '10-zone') {
+      scoreOptions = ['X', 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+    }
 
-            return ElevatedButton(
-              onPressed: () {
-                final intValue = (score == 'X') ? 11 : (score as int);
-                _inputScore(intValue);
-              },
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.all(6),
-                elevation: 2,
-                backgroundColor: bg,
-                foregroundColor: Colors.black87,
-                side: BorderSide(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(label, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
-                  if (score != 0)
-                    Text('pts', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
-                ],
-              ),
-            );
-          }).toList(),
-        )
-      ],
-    ),
-  );
-}
-  
+    Color getButtonColor(dynamic score) {
+      if (score == 'X') return Colors.yellow;
+      if (score == 10 || score == 9) return Colors.yellow;
+      if (score == 8 || score == 7) return Colors.red;
+      if (score == 6 || score == 5) return Colors.blue;
+      if (score == 4 || score == 3) return Colors.black;
+      if (score == 2 || score == 1) return Colors.white;
+      if (score == 0) return Colors.green;
+      return Colors.white;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isFinished ? Colors.grey[100] : Colors.greenAccent[100],
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 6))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Score Keypad', style: TextStyle(fontWeight: FontWeight.w600)),
+              if (isFinished)
+                const Text('Session Complete', style: TextStyle(color: Colors.green, fontSize: 12)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 4,
+            childAspectRatio: 1.4,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            children: scoreOptions.map((score) {
+              final label = score == 0 ? 'M' : score.toString();
+              final bg = getButtonColor(score);
+              final textColor = (score == 4 || score == 3) ? Colors.white : Colors.black;
+
+              return ElevatedButton(
+                onPressed: isFinished
+                    ? null
+                    : () {
+                        final intValue = (score == 'X') ? 11 : (score as int);
+                        _inputScore(intValue);
+                      },
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.all(6),
+                  elevation: 2,
+                  backgroundColor: bg,
+                  foregroundColor: Colors.black87,
+                  side: BorderSide(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(label, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
+                    if (score != 0)
+                      Text('pts', style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                  ],
+                ),
+              );
+            }).toList(),
+          )
+        ],
+      ),
+    );
+  }
+
   Widget _scoreGridCard() {
+    Color bgFor(int s) {
+      if (s == 10 || s == 9) return Colors.yellow;
+      if (s == 8 || s == 7) return Colors.red;
+      if (s == 6 || s == 5) return Colors.blue;
+      if (s == 4 || s == 3) return Colors.black;
+      if (s == 2 || s == 1) return Colors.white;
+      if (s == 0) return Colors.green;
+      return Colors.white;
+    }
+
+    Color fgFor(Color bg) => bg.computeLuminance() < 0.5 ? Colors.white : Colors.black;
+
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -333,35 +382,17 @@ class _PlayScreenState extends State<PlayScreen> {
                       children: List.generate(
                         widget.round.arrowsPerEnd,
                         (arrowIdx) {
-                          final raw = scores[endIdx][arrowIdx];                  // may be 11 for X
-                          final isActive = endIdx == currentEnd && arrowIdx == currentArrow;
+                          final raw = scores[endIdx][arrowIdx];
 
-                          // treat 11 (X) as numeric 10 for color
-                          int numeric(int v) => v == 11 ? 10 : v;
-
-                          // color map (same as keypad)
-                          Color bgFor(int s) {
-                            if (s == 10 || s == 9) return Colors.yellow;
-                            if (s == 8 || s == 7)  return Colors.red;
-                            if (s == 6 || s == 5)  return Colors.blue;
-                            if (s == 4 || s == 3)  return Colors.black;
-                            if (s == 2 || s == 1)  return Colors.white;
-                            if (s == 0)            return Colors.green;
-                            return Colors.white;
-                          }
-
-                          Color fgFor(Color bg) => bg.computeLuminance() < 0.5 ? Colors.white : Colors.black;
-
-                          // simplest “filled” logic: anything before the cursor is filled
-                          bool filled = (endIdx < currentEnd) || (endIdx == currentEnd && arrowIdx < currentArrow);
-
-                          // background & label
-                          final Color bg = filled ? bgFor(numeric(raw)) : (Colors.grey[100]!);
+                          final bool hasValue = raw != emptyCell; // ← changed
+                          final int numeric = hasValue ? (raw == 11 ? 10 : raw) : 0; // ← changed
+                          final Color bg = hasValue ? bgFor(numeric) : (Colors.grey[100]!); // ← changed
                           final Color fg = fgFor(bg);
-                          final String label = !filled
-                              ? '-'                        // not entered yet
-                              : (raw == 11 ? 'X'           // show X
-                                          : (numeric(raw) == 0 ? 'M' : numeric(raw).toString()));
+                          final String label = hasValue
+                              ? (raw == 11 ? 'X' : (numeric == 0 ? 'M' : numeric.toString()))
+                              : '-'; // ← changed
+
+                          final bool isActive = (endIdx == currentEnd && arrowIdx == currentArrow);
 
                           return Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -375,9 +406,7 @@ class _PlayScreenState extends State<PlayScreen> {
                                     shape: BoxShape.circle,
                                     color: bg,
                                     border: Border.all(
-                                      color: isActive
-                                          ? Colors.blue
-                                          : (bg == Colors.white ? Colors.grey.shade300 : Colors.transparent),
+                                      color: isActive ? Colors.blue : (bg == Colors.white ? Colors.grey.shade300 : Colors.transparent),
                                       width: isActive ? 2 : 1,
                                     ),
                                   ),
@@ -388,7 +417,6 @@ class _PlayScreenState extends State<PlayScreen> {
                               ],
                             ),
                           );
-
                         },
                       ),
                     ),
