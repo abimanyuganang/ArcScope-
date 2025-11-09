@@ -13,6 +13,7 @@ class Session {
   String? userId;
   int? ends;
   int? arrowsPerEnd;
+  
 
   Session({
     required this.id,
@@ -119,23 +120,80 @@ extension SessionAnalytics on Session {
 
 extension SessionInsights on Session {
   List<String> get insights {
-    final result = <String>[];
-    final trend = scoreTrendPerEnd;
-    if (trend.isNotEmpty && trend.first < trend.last) {
-      result.add("Improving trend — keep it up!");
-    } else if (trend.isNotEmpty && trend.first > trend.last) {
-      result.add("Declining last session → fatigue → reduce volume or rest after 3 ends.");
+    if (scores.isEmpty) return [];
+    final insights = <String>[];
+
+    // Determine scoring type from sessionType
+    final isField = sessionType?.toLowerCase() == 'field';
+    final is3D = sessionType?.toLowerCase() == '3d';
+    
+    if (isField) {
+      // Field archery insights (5-1 scoring)
+      final fives = scores.where((s) => s == 5).length;
+      final fivePercent = (fives / scores.length * 100).toStringAsFixed(1);
+      insights.add('You hit $fives 5s ($fivePercent%)');
+
+      final lowScores = scores.where((s) => s <= 2).length;
+      if (lowScores > 0) {
+        insights.add('$lowScores arrows scored 2 or less');
+      }
+
+    } else if (is3D) {
+      // 3D archery insights (10,8,5,0 scoring)
+      final tens = scores.where((s) => s == 10).length;
+      if (tens > 0) {
+        final tenPercent = (tens / scores.length * 100).toStringAsFixed(1);
+        insights.add('You hit $tens 10s ($tenPercent%)');
+      }
+
+      final kills = scores.where((s) => s >= 8).length;
+      final killPercent = (kills / scores.length * 100).toStringAsFixed(1);
+      insights.add('Kill zone hits: $kills ($killPercent%)');
+
+      final misses = scores.where((s) => s == 0).length;
+      if (misses > 0) {
+        insights.add('$misses complete misses');
+      }
+
+    } else {
+      // FITA/Default 10-zone scoring
+      final tens = scores.where((s) => s >= 10).length;
+      if (tens > 0) {
+        final tenPercent = (tens / scores.length * 100).toStringAsFixed(1);
+        insights.add('You hit $tens 10s ($tenPercent%)');
+      }
+
+      final nines = scores.where((s) => s == 9).length;
+      if (nines > 0) {
+        insights.add('$nines arrows in the 9 ring');
+      }
+
+      final gold = scores.where((s) => s >= 9).length;
+      final goldPercent = (gold / scores.length * 100).toStringAsFixed(1);
+      insights.add('Gold zone hits: $gold ($goldPercent%)');
+
+      final lowScores = scores.where((s) => s <= 6).length;
+      if (lowScores > 0) {
+        insights.add('$lowScores arrows scored 6 or less');
+      }
     }
-    if (meanRadialError > 5) {
-      result.add("Cluster shifted left → check tiller/release weight/finger pressure.");
+
+    // Common insights for all types
+    final double avg = this.average;
+    insights.add('Average per arrow: ${avg.toStringAsFixed(2)}');
+
+    if (scores.length >= 2) {
+      final last3 = scores.reversed.take(3).toList();
+      final last3Avg = last3.map((e) => e.toDouble()).average;
+      if (last3Avg > avg) {
+        insights.add('Strong finish! Last 3 arrows above average');
+      }
     }
-    if (trend.isNotEmpty && trend.take(3).average < 5) {
-      result.add("Early ends too low (elevation) — check anchor/sight.");
-    }
-    return result;
+
+    return insights;
   }
 }
 
-extension ListAverage on Iterable<double> {
-  double get average => isEmpty ? 0 : reduce((a, b) => a + b) / length;
+extension ListAverage on Iterable<num> {
+  double get average => isEmpty ? 0.0 : map((e) => e.toDouble()).reduce((a, b) => a + b) / length;
 }

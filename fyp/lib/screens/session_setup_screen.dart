@@ -187,7 +187,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
             padding: const EdgeInsets.all(16),
             child: ListTile(
               leading: const Icon(Icons.calendar_today, color: Colors.green),
-              title: const Text('Date & Time*', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+              title: const Text('Date & Time*', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
               subtitle: Text('${_dateTime.month}/${_dateTime.day}/${_dateTime.year}, ${_dateTime.hour.toString().padLeft(2, '0')}:${_dateTime.minute.toString().padLeft(2, '0')}'),
               trailing: IconButton(
                 icon: const Icon(Icons.edit, color: const Color(0xFFB0CE88)),
@@ -229,7 +229,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Location Settings', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 16)),
+                const Text('Location Settings', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 16)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -238,11 +238,11 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _locationType,
-                        items: _locationTypes.map((t) => DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(color: Colors.black87)))).toList(),
+                        items: _locationTypes.map((t) => DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(color: Colors.black)))).toList(),
                         onChanged: (v) => setState(() => _locationType = v ?? 'Indoor'),
                         decoration: const InputDecoration(
                           labelText: 'Location Type',
-                          labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                          labelStyle: TextStyle(color: Colors.black),
                           border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
                           focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
                         ),
@@ -255,7 +255,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Location (e.g., Local Range)',
                     prefixIcon: Icon(Icons.map, color: Colors.green),
-                    labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                    labelStyle: TextStyle(color: Colors.black),
                     border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
                     focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
                   ),
@@ -276,7 +276,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Shooting Details', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 16)),
+                const Text('Shooting Details', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 16)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -285,11 +285,11 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                     Expanded(
                       child: DropdownButtonFormField<double>(
                         value: _distance,
-                        items: _distances.map((d) => DropdownMenuItem(value: d, child: Text('${d.toInt()}m', style: const TextStyle(color: Colors.black87)))).toList(),
+                        items: _distances.map((d) => DropdownMenuItem(value: d, child: Text('${d.toInt()}m', style: const TextStyle(color: Colors.black)))).toList(),
                         onChanged: (v) => setState(() => _distance = v ?? 18),
                         decoration: const InputDecoration(
                           labelText: 'Distance*',
-                          labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                          labelStyle: TextStyle(color: Colors.black),
                           border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
                           focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
                         ),
@@ -305,11 +305,11 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _targetType,
-                        items: _targetTypes.map((t) => DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(color: Colors.black87)))).toList(),
+                        items: _targetTypes.map((t) => DropdownMenuItem(value: t, child: Text(t, style: const TextStyle(color: Colors.black)))).toList(),
                         onChanged: (v) => _updateArrowsPerEnd(v ?? 'FITA'),
                         decoration: const InputDecoration(
                           labelText: 'Target Type*',
-                          labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                          labelStyle: TextStyle(color: Colors.black),
                           border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
                           focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
                         ),
@@ -325,11 +325,11 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _bowType,
-                        items: _bowTypes.map((b) => DropdownMenuItem(value: b, child: Text(b, style: const TextStyle(color: Colors.black87)))).toList(),
+                        items: _bowTypes.map((b) => DropdownMenuItem(value: b, child: Text(b, style: const TextStyle(color: Colors.black)))).toList(),
                         onChanged: (v) => setState(() => _bowType = v ?? 'Recurve'),
                         decoration: const InputDecoration(
                           labelText: 'Bow Type*',
-                          labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                          labelStyle: TextStyle(color: Colors.black),
                           border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
                           focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
                         ),
@@ -352,7 +352,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Additional Settings', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 16)),
+                const Text('Additional Settings', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 16)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -363,7 +363,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                         initialValue: _ends.toString(),
                         decoration: const InputDecoration(
                           labelText: 'Number of Ends',
-                          labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                          labelStyle: TextStyle(color: Colors.black),
                           border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
                           focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
                         ),
@@ -378,7 +378,7 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Notes (e.g., Windy conditions, 10mph)',
                     prefixIcon: Icon(Icons.note, color: Colors.green),
-                    labelStyle: TextStyle(color: const Color(0xFFE53935)),
+                    labelStyle: TextStyle(color: Colors.black),
                     border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
                     focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green)),
                   ),
